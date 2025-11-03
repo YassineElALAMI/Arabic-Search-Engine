@@ -1,0 +1,9 @@
+com\myorg\search\BuildMatrixOnly.class
+com\myorg\search\SearchEngineDemo.class
+com\myorg\search\CosineSimilarity.class
+com\myorg\search\SearchEngine.class
+com\myorg\search\Preprocessor.class
+com\myorg\search\TfIdfBuilder.class
+com\myorg\search\SearchEngineGUI.class
+com\myorg\search\SearchEngine$SearchResult.class
+com\myorg\search\Main.class

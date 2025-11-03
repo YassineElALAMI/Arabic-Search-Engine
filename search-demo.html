@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arabic Search Engine</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Arial', sans-serif;
+            background: #fafafa;
+            min-height: 100vh;
+            padding: 30px 20px;
+            direction: rtl;
+            color: #2c3e50;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .header {
+            margin-bottom: 35px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            font-size: 14px;
+            color: #7f8c8d;
+        }
+
+        .search-box {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 18px 20px;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 12px 16px;
+            font-size: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            outline: none;
+            transition: border-color 0.2s;
+            direction: rtl;
+            text-align: right;
+            font-family: inherit;
+        }
+
+        input[type="text"]:focus {
+            border-color: #5c6bc0;
+        }
+
+        button {
+            padding: 12px 24px;
+            font-size: 14px;
+            font-weight: 500;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        .search-btn {
+            background: #5c6bc0;
+            color: white;
+        }
+
+        .search-btn:hover {
+            background: #3f51b5;
+        }
+
+        .clear-btn {
+            background: transparent;
+            color: #7f8c8d;
+            border: 1px solid #bdc3c7;
+        }
+
+        .clear-btn:hover {
+            background: #ecf0f1;
+            color: #2c3e50;
+            border-color: #95a5a6;
+        }
+
+        .status {
+            padding: 10px 16px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            text-align: center;
+        }
+
+        .status.ready {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .status.searching {
+            background: #fff8e1;
+            color: #f57c00;
+        }
+
+        .status.error {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .results-container {
+            display: grid;
+            gap: 16px;
+        }
+
+        .result-card {
+            background: white;
+            border: 1px solid #e8eaed;
+            border-radius: 6px;
+            padding: 20px;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .result-card:hover {
+            border-color: #d0d3d6;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .rank-badge {
+            background: #5c6bc0;
+            color: white;
+            min-width: 32px;
+            height: 32px;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .doc-name {
+            flex: 1;
+            font-size: 16px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .score-badge {
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 4px 10px;
+            border-radius: 3px;
+            font-weight: 500;
+            font-size: 12px;
+        }
+
+        .score-bar {
+            height: 4px;
+            background: #e0e0e0;
+            border-radius: 2px;
+            margin-bottom: 14px;
+            overflow: hidden;
+        }
+
+        .score-fill {
+            height: 100%;
+            background: #5c6bc0;
+            transition: width 0.6s ease-out;
+        }
+
+        .file-path {
+            color: #7f8c8d;
+            font-size: 11px;
+            margin-bottom: 12px;
+            word-break: break-all;
+            line-height: 1.5;
+        }
+
+        .content-preview {
+            color: #34495e;
+            font-size: 13px;
+            line-height: 1.6;
+            margin-bottom: 14px;
+        }
+
+        .view-link {
+            color: #5c6bc0;
+            font-size: 13px;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .view-link:hover {
+            text-decoration: underline;
+        }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            overflow: auto;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background: white;
+            max-width: 800px;
+            margin: 40px auto;
+            border-radius: 8px;
+            padding: 32px;
+            animation: fadeIn 0.2s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .modal-header {
+            border-bottom: 1px solid #e0e0e0;
+            padding-bottom: 18px;
+            margin-bottom: 22px;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+
+        .modal-score {
+            color: #7f8c8d;
+            font-size: 13px;
+        }
+
+        .modal-score span {
+            color: #2e7d32;
+            font-weight: 600;
+        }
+
+        .modal-section {
+            margin-bottom: 22px;
+        }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .modal-path {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 4px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 11px;
+            word-break: break-all;
+            color: #34495e;
+            border: 1px solid #e0e0e0;
+        }
+
+        .modal-content-text {
+            background: white;
+            padding: 16px;
+            border-radius: 4px;
+            max-height: 350px;
+            overflow-y: auto;
+            line-height: 1.7;
+            font-size: 13px;
+            direction: rtl;
+            text-align: right;
+            border: 1px solid #e0e0e0;
+        }
+
+        .modal-close-btn {
+            background: #5c6bc0;
+            color: white;
+            padding: 11px 28px;
+            font-size: 14px;
+            width: auto;
+            float: left;
+        }
+
+        .modal-close-btn:hover {
+            background: #3f51b5;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .no-results-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .no-results h3 {
+            color: #7f8c8d;
+            font-size: 18px;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .no-results p {
+            color: #95a5a6;
+            font-size: 13px;
+        }
+
+        .info-box {
+            background: #fff8e1;
+            border: 1px solid #ffecb3;
+            border-radius: 6px;
+            padding: 18px;
+            margin-top: 25px;
+            font-size: 13px;
+            color: #f57c00;
+            line-height: 1.6;
+        }
+
+        .info-box strong {
+            display: block;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .info-box ol {
+            margin-top: 10px;
+            padding-right: 20px;
+        }
+
+        .info-box code {
+            background: white;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-family: 'Consolas', monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Modal for full content -->
+    <div id="contentModal" class="modal" onclick="closeModal(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <div class="modal-title" id="modalTitle">Document Title</div>
+                <div class="modal-score">Relevance: <span id="modalScore">0.0%</span></div>
+            </div>
+            
+            <div class="modal-section">
+                <div class="section-title">Location</div>
+                <div class="modal-path" id="modalPath">Path will appear here</div>
+            </div>
+            
+            <div class="modal-section">
+                <div class="section-title">Document Content</div>
+                <div class="modal-content-text" id="modalContent">Content will appear here</div>
+            </div>
+            
+            <button class="modal-close-btn" onclick="closeModal()">Close</button>
+            <div style="clear: both;"></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <h1>Arabic Search Engine</h1>
+            <p>Powered by TF-IDF and SAFAR stemming technology</p>
+        </div>
+
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="Enter your search query in Arabic..." autofocus>
+            <button class="search-btn" onclick="performSearch()">Search</button>
+            <button class="clear-btn" onclick="clearResults()">Clear</button>
+        </div>
+
+        <div id="status" class="status ready">Ready to search</div>
+
+        <div id="results" class="results-container">
+            <div class="no-results">
+                <div class="no-results-icon">🔍</div>
+                <h3>No results yet</h3>
+                <p>Enter a query to start searching</p>
+            </div>
+            
+            <div class="info-box">
+                <strong>Note</strong>
+                This is a demonstration interface with sample data. To search your actual corpus:
+                <ol style="text-align: right; margin-top: 10px; padding-right: 25px;">
+                    <li>Use the JavaFX desktop application: <code>mvn javafx:run</code></li>
+                    <li>Or create a REST API with Spring Boot to connect this interface</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                performSearch();
+            }
+        });
+
+        function performSearch() {
+            const query = document.getElementById('searchInput').value.trim();
+            const statusDiv = document.getElementById('status');
+            const resultsDiv = document.getElementById('results');
+
+            if (!query) {
+                statusDiv.className = 'status error';
+                statusDiv.textContent = 'Please enter a search query';
+                return;
+            }
+
+            statusDiv.className = 'status searching';
+            statusDiv.textContent = 'Searching for "' + query + '"...';
+
+            // Simulate search delay (replace with actual API call)
+            setTimeout(() => {
+                displayDemoResults(query);
+            }, 800);
+        }
+
+        function displayDemoResults(query) {
+            const statusDiv = document.getElementById('status');
+            const resultsDiv = document.getElementById('results');
+
+            // Demo data with realistic content
+            const demoResults = [
+                { 
+                    rank: 1, 
+                    document: 'txt2.txt', 
+                    score: 0.8523,
+                    path: 'src/main/resources/Corpus/Hespres/اقتصاد/txt2.txt',
+                    content: 'هذا نص تجريبي يحتوي على معلومات اقتصادية هامة. تشهد الأسواق العالمية تطورات كبيرة في الآونة الأخيرة، مع ارتفاع أسعار النفط والذهب. يتوقع الخبراء استمرار هذا الاتجاه خلال الأشهر القادمة نتيجة للأوضاع الجيوسياسية الراهنة.\n\nكما أن القطاع المصرفي يشهد نموا ملحوظا مع زيادة الاستثمارات الأجنبية المباشرة.'
+                },
+                { 
+                    rank: 2, 
+                    document: 'f3.txt', 
+                    score: 0.7841,
+                    path: 'src/main/resources/Corpus/agadir24/الاقتصاد والمال/f3.txt',
+                    content: 'التقرير الاقتصادي الشهري يشير إلى تحسن ملحوظ في مؤشرات النمو الاقتصادي. البنك المركزي أعلن عن إجراءات جديدة لدعم الاستثمار وتشجيع المشاريع الصغيرة والمتوسطة.\n\nالحكومة تعمل على تنفيذ إصلاحات هيكلية شاملة تهدف إلى تعزيز التنافسية وجذب المزيد من الاستثمارات الخارجية.'
+                },
+                { 
+                    rank: 3, 
+                    document: 'file5.txt', 
+                    score: 0.6234,
+                    path: 'src/main/resources/Corpus/Voice of morocco/اقتصاد/file5.txt',
+                    content: 'البورصة المحلية سجلت ارتفاعا قياسيا في التعاملات اليومية خلال الأسبوع الماضي. المحللون الماليون يرون أن هذا الاتجاه الإيجابي يعكس ثقة المستثمرين المتزايدة في الاقتصاد الوطني.'
+                },
+                { 
+                    rank: 4, 
+                    document: 'txt1.txt', 
+                    score: 0.5912,
+                    path: 'src/main/resources/Corpus/Hespres/سياسة/txt1.txt',
+                    content: 'الاجتماع الوزاري ناقش عددا من القضايا الاقتصادية والسياسية الهامة. تم التركيز بشكل خاص على خطط التنمية الاقتصادية المستدامة والسياسات الضريبية الجديدة.'
+                },
+                { 
+                    rank: 5, 
+                    document: 'f1.txt', 
+                    score: 0.5234,
+                    path: 'src/main/resources/Corpus/agadir24/مجتمع/f1.txt',
+                    content: 'التقرير الاجتماعي يسلط الضوء على تأثير السياسات الاقتصادية على حياة المواطنين. البرامج الاجتماعية الجديدة تهدف إلى تحسين مستوى المعيشة وخلق فرص عمل جديدة.'
+                }
+            ];
+
+            let html = '';
+
+            demoResults.forEach(result => {
+                const contentPreview = result.content.length > 180 
+                    ? result.content.substring(0, 180) + '...' 
+                    : result.content;
+
+                html += `
+                    <div class="result-card" onclick='showFullContent(${JSON.stringify(result)})'>
+                        <div class="card-header">
+                            <div class="rank-badge">${result.rank}</div>
+                            <div class="doc-name">${result.document}</div>
+                            <div class="score-badge">${(result.score * 100).toFixed(1)}% match</div>
+                        </div>
+                        
+                        <div class="score-bar">
+                            <div class="score-fill" style="width: ${result.score * 100}%"></div>
+                        </div>
+                        
+                        <div class="file-path">${result.path}</div>
+                        
+                        <div class="content-preview">${contentPreview}</div>
+                        
+                        <a href="#" class="view-link" onclick='event.stopPropagation(); showFullContent(${JSON.stringify(result)}); return false;'>
+                            View full document →
+                        </a>
+                    </div>
+                `;
+            });
+
+            html += `
+                <div class="info-box">
+                    <strong>Demonstration Mode</strong>
+                    These are sample results. To search your actual corpus, use the JavaFX desktop application or connect this interface to your backend via REST API.
+                </div>
+            `;
+
+            resultsDiv.innerHTML = html;
+            statusDiv.className = 'status ready';
+            statusDiv.textContent = `Found ${demoResults.length} result${demoResults.length > 1 ? 's' : ''}`;
+        }
+
+        function showFullContent(result) {
+            const modal = document.getElementById('contentModal');
+            document.getElementById('modalTitle').textContent = result.document;
+            document.getElementById('modalScore').textContent = (result.score * 100).toFixed(1) + '%';
+            document.getElementById('modalPath').textContent = result.path;
+            document.getElementById('modalContent').textContent = result.content;
+            
+            modal.style.display = 'block';
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal(event) {
+            const modal = document.getElementById('contentModal');
+            
+            if (!event || event.target === modal || event.target.classList.contains('modal-close-btn')) {
+                modal.style.display = 'none';
+                document.body.style.overflow = 'auto';
+            }
+        }
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeModal();
+            }
+        });
+
+        function clearResults() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('results').innerHTML = `
+                <div class="no-results">
+                    <div class="no-results-icon">�</div>
+                    <h3>No results yet</h3>
+                    <p>Enter a query to start searching</p>
+                </div>
+                
+                <div class="info-box">
+                    <strong>Note</strong>
+                    This is a demonstration interface with sample data. To search your actual corpus:
+                    <ol style="text-align: right; margin-top: 10px; padding-right: 25px;">
+                        <li>Use the JavaFX desktop application: <code>mvn javafx:run</code></li>
+                        <li>Or create a REST API with Spring Boot to connect this interface</li>
+                    </ol>
+                </div>
+            `;
+            document.getElementById('status').className = 'status ready';
+            document.getElementById('status').textContent = 'Ready to search';
+        }
+    </script>
+</body>
+</html>
