@@ -838,8 +838,6 @@ Educational project - free to use and modify.
 
 ## 👥 Contributors
 
-Built with ChatGPT-5 and GitHub Copilot.
-
 ---
 
 **Happy Searching! 🔍✨**
